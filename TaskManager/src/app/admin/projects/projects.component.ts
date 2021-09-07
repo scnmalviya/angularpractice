@@ -1,0 +1,132 @@
+import { Component, OnInit } from '@angular/core';
+import { Project } from 'src/app/project';
+import { ProjectsService } from 'src/app/projects.service';
+
+@Component({
+  selector: 'app-projects',
+  templateUrl: './projects.component.html',
+  styleUrls: ['./projects.component.scss']
+})
+export class ProjectsComponent implements OnInit {
+
+  projects: Project[] =[];
+  newProject: Project = new Project();
+  editProject: Project = new Project();
+  editIndex:any = null;
+  deleteProject: Project = new Project();
+  deleteIndex: any = null;
+  searchBy: string = 'ProjectName';
+  searchText: string = '';
+
+  constructor(private projectsService: ProjectsService)
+  {
+  }
+
+  ngOnInit()
+  {
+    this.projectsService.getAllProjects().subscribe(
+      (response: Project[]) =>
+      {
+        this.projects = response;
+      }
+    );
+  }
+
+  onSaveClick()
+  {
+    this.projectsService.insertProject(this.newProject).subscribe((response) => {
+      //Add Project to Grid
+      var p: Project = new Project();
+      p.projectId = response.projectId;
+      p.projectName = response.projectName;
+      p.dateOfStart = response.dateOfStart;
+      p.teamSize = response.teamSize;
+      this.projects.push(p);
+
+      //Clear New Project Dialog - TextBoxes 
+      this.newProject.projectId = null;
+      this.newProject.projectName = null;
+      this.newProject.dateOfStart = null;
+      this.newProject.teamSize = null;
+    }, (error) => {
+      console.log(error);
+    });
+  }
+
+  onEditClick(event:any,index:number)
+  {
+      this.editProject.projectId = this.projects[index].projectId;
+      this.editProject.projectName = this.projects[index].projectName;
+      this.editProject.dateOfStart = this.projects[index].dateOfStart;
+      this.editProject.teamSize = this.projects[index].teamSize;
+      this.editIndex = index;
+  }
+
+  onUpdateClick()
+  {
+      this.projectsService.updateProject(this.editProject).subscribe((response:Project)=>
+      {
+        var p: Project = new Project();
+        p.projectId = response.projectId;
+        p.projectName = response.projectName;
+        p.dateOfStart = response.dateOfStart;
+        p.teamSize = response.teamSize;
+        this.projects[this.editIndex] = p;
+
+         //Clear New Project Dialog - TextBoxes 
+      this.newProject.projectId = null;
+      this.newProject.projectName = null;
+      this.newProject.dateOfStart = null;
+      this.newProject.teamSize = null;
+      },
+      (error) =>
+      {
+        console.log(error);
+      });
+  }
+
+  onDeleteClick(event: any, index: number)
+  {
+    this.deleteIndex = index;
+    this.deleteProject.projectId = this.projects[index].projectId;
+    this.deleteProject.projectName = this.projects[index].projectName;
+    this.deleteProject.dateOfStart = this.projects[index].dateOfStart;
+    this.deleteProject.teamSize = this.projects[index].teamSize;
+  }
+
+  onDeleteConfirmClick()
+  {
+    this.projectsService.deleteProject(this.deleteProject.projectId).subscribe(
+      (response) =>
+      {
+        this.projects.splice(this.deleteIndex, 1);
+        this.deleteProject.projectId = null;
+        this.deleteProject.projectName = null;
+        this.deleteProject.teamSize = null;
+        this.deleteProject.dateOfStart = null;
+      },
+      (error) =>
+      {
+        console.log(error);
+      }
+    );
+  }
+
+  onSearchClick()
+  {
+    this.projectsService
+      .SearchProjects(this.searchBy, this.searchText)
+      .subscribe(
+        (response: Project[]) =>
+        {
+          this.projects = response;
+        },
+        (error) =>
+        {
+          console.log(error);
+        }
+      );
+  }
+
+}
+
